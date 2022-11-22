@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block title %}new person{% endblock %} 
+{% block content %}
+<form method="POST">
+    <h3 align="center">new person</h3>
+
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="firstName"
+        name="firstName"
+        placeholder="Enter first name"
+      />
+    </div>
+    <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="lastName"
+          name="lastName"
+          placeholder="Enter last name"
+        />
+      </div>
+      <div class="form-group">
+        <label for="email">email</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          placeholder="Enter email"
+        />
+      </div>
+    <div class="form-group">
+      <label for="passCode">pass code</label>
+      <input
+        type="text"
+        class="form-control"
+        id="passCode"
+        name="passCode"
+        placeholder="Enter pass code"
+      />
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %} {% block title %}Personnel{% endblock %} 
+{% block nav %}
+<a class="nav-item nav-link" id="addPersonnel" href="/add_person">New Person</a>
+{% endblock %}
+{% block content %}
+
+<style>
+  table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+  </style>
+<table style="width:100%">
+  <tr>
+    <th>ID</th>
+    <th>First name</th>
+    <th>Last name</th>
+    <th>Pin</th>
+    <th> </th>
+    <th> </th>
+  </tr>
+  {% for person in user.personnel %}
+  <tr>
+    <td>{{ person.id }}</td>
+    <td>{{ person.first_name }}</td>
+    <td>{{ person.last_name }}</td>
+    <td>{{ person.pass_code }}</td>
+    <td><a href="{{ url_for('views.edit_person', id = person.id) }}">Edit</a></td>
+    <td><a href="{{ url_for('views.delete_person', id = person.id) }}">Delete</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

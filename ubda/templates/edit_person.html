@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}new person{% endblock %} 
+{% block nav %}
+<a class="nav-item nav-link" id="personnel" href="/personnel">Personnel</a>
+{% endblock %}
+{% block content %}
+<form method="POST">
+    <h3 align="center">edit person</h3>
+
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="firstName"
+        name="firstName"
+        placeholder="Enter first name"
+        value = "{{ person.first_name }}"
+      />
+    </div>
+    <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="lastName"
+          name="lastName"
+          placeholder="Enter last name"
+          value = "{{ person.last_name }}"
+        />
+      </div>
+      <div class="form-group">
+        <label for="email">email</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          placeholder="Enter email"
+          value = "{{ person.email }}"
+        />
+      </div>
+    <div class="form-group">
+      <label for="passCode">pass code</label>
+      <input
+        type="text"
+        class="form-control"
+        id="passCode"
+        name="passCode"
+        placeholder="Enter pass code"
+        value = "{{ person.pass_code }}"
+      />
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+{% endblock %}
