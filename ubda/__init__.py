@@ -19,9 +19,6 @@ sock = Sock(app)
 
 db.init_app(app)
 
-with app.app_context():
-    db.create_all()
-    print('Created Database!')
 
 from .views import views
 from .auth import auth
@@ -35,7 +32,10 @@ app.register_blueprint(access, url_prefix='/')
 #app.register_blueprint(deviceServer)###
 
 from .models import User
-#
+
+with app.app_context():
+    db.create_all()
+    print('Created Database!')
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
