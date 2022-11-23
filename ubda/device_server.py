@@ -1,11 +1,9 @@
-
 from flask import Blueprint
 import socketserver
 import threading 
 from .models import Device
 import json
 
-#deviceServer = Blueprint('deviceServer', __name__)
 
 def process(data): 
     return '*'

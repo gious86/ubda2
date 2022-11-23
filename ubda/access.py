@@ -8,6 +8,8 @@ import io
 from .models import Device
 import json
 
+to_devices = {}
+
 access = Blueprint('access', __name__)
 
 
@@ -20,22 +22,24 @@ def qr_generator(id):
 
 @access.route("/access/<string:id>", methods=['GET', 'POST'])
 def qr_access(id):
+    device = Device.query.filter_by(mac = id).first()
     if request.method == 'POST':
         code = request.form.get('passcode')
         person = Person.query.filter_by(pass_code=code).first()
-        if person:
+        if person and device:
+            #check if person has access
+            to_devices.update({device.id:'{"open":3}'}) #
             flash(f'Welcome {person.first_name}')
-            return render_template('message.html') #'<h1>Access granted</h1>'
+            return render_template('message.html', url = url_for('access.qr_access', id = device.mac)) 
         else:
             flash('Wrong code')
-            return render_template('message.html') #'Wrong code'
+            return render_template('message.html', url = url_for('access.qr_access', id = device.mac)) 
     else:
-        device = Device.query.filter_by(mac = id).first()
         if device:
             return render_template('qr_access.html')
         else:
             flash(f'device with id:{id} does not exist!')
-            return render_template('message.html')
+            return render_template('message.html', url = url_for('views.home'))
 
 
 def generate_qr(data):
@@ -52,38 +56,58 @@ def generate_qr(data):
     img_io.seek(0)
     return img_io
 
+
 @sock.route('/ws/<string:id>')
 def qr_access(ws, id):
     client_ip = request.remote_addr
-    data = ws.receive()
-    model = None
-    try:
-        js = json.loads(data)
-        model = js['model']
-    except Exception as e:
-        print(f'exception:{e}') 
-    if model:
-        print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')
-    else:
-        print('unsupported format')
+    print(f'incomming connection id:"{id}"')
+    data = ws.receive(10)
+    if not data:
+        print('timeout')
+        ws.close()
         return
-    device = Device.query.filter_by(mac=id).first()
-    if not device:
-        print(f'new device adding to DB...')
-        device = Device(
-                mac = id,
-                model = model,
-        )
-        db.session.add(device)
-        db.session.commit()
-        print(f'device with id:{id} added to DB')
-    else :
-        print('known device')
+    else:
+        model = None
+        if len(data) < 100:
+            try:
+                js = json.loads(data)
+                model = js['model']
+            except Exception as e:              
+                print(f'exception:{e}')
+        if model:
+            print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')
+        else:
+            print('unsupported format, closing connection...')
+            ws.close()
+            return
+        device = Device.query.filter_by(mac=id).first()
+        if not device:
+            print(f'new device adding to DB...')
+            device = Device(
+                    mac = id,
+                    model = model,
+                    )
+            db.session.add(device)
+            db.session.commit()
+            print(f'device with id:{id} added to DB')
+        else :
+            print('known device')
     while True:
         try:
-            data = ws.receive()
-            print(data)
-            ws.send(data)
-        except:
-            print('connection with "{id}" closed')
+            data = ws.receive(1) 
+            if data:
+                print(f'from device "{device.mac}" - "{data}"')
+            #if have something to send:
+                #ws.send(something)
+            cmd = None
+            try:
+                cmd = to_devices[device.id]
+            except KeyError:
+                pass
+            if cmd:
+                print(f'to device "{device.mac}" - "{cmd}"')
+                ws.send(cmd)
+                to_devices.pop(device.id)
+        except Exception as e:
+            print(f'connection with "{id}" closed. e:{e}')
             break

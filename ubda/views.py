@@ -93,3 +93,8 @@ def delete_person(id):
 def devices():
     devs = Device.query.all()
     return render_template("devices.html", user=current_user, devs = devs)
+
+
+@views.route('/kp')
+def kp():
+    return render_template("keypad.html")
