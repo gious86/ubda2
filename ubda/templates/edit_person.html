@@ -1,7 +1,4 @@
-{% extends "base.html" %} {% block title %}new person{% endblock %} 
-{% block nav %}
-<a class="nav-item nav-link" id="personnel" href="/personnel">Personnel</a>
-{% endblock %}
+{% extends "base.html" %} {% block title %}edit person{% endblock %} 
 {% block content %}
 <form method="POST">
     <h3 align="center">edit person</h3>
@@ -40,15 +37,32 @@
         />
       </div>
     <div class="form-group">
-      <label for="passCode">pass code</label>
+      <label for="pin">pin</label>
       <input
         type="text"
         class="form-control"
-        id="passCode"
-        name="passCode"
-        placeholder="Enter pass code"
-        value = "{{ person.pass_code }}"
+        id="pin"
+        name="pin"
+        placeholder="Enter pin"
+        value = "{{ person.pin }}"
       />
+    </div>
+    <div class="form-group">
+      <label for="accessLevel">Access level</label>
+      <select
+        class="form-control"
+        id="access_level"
+        name="access_level"
+        placeholder="Access level">
+        {% for a in access_levels %}
+        <option value={{a.id}}
+        {% if a.id == person.access_level %}
+          selected
+          {% endif %}>
+          {{a.name}}
+        </option>
+        {% endfor %}
+      </select>
     </div>
     
     <button type="submit" class="btn btn-primary">Submit</button>

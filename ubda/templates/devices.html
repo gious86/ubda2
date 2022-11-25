@@ -23,23 +23,21 @@
   </style>
 <table style="width:100%">
   <tr>
-    <th>ID</th>
+    <th>Name</th>
     <th>MAC</th>
     <th>Model</th>
-    <th>IP</th>
     <th>Access URL</th>
     <th>QR</th>
     <th> </th>
   </tr>
   {% for dev in devs %}
   <tr>
-    <td>{{ dev.id }}</td>
+    <td>{{ dev.name }}</td>
     <td>{{ dev.mac }}</td>
     <td>{{ dev.model }}</td>
-    <td>{{ dev.ip_address }}</td>
     <td><a href="{{ url_for('access.qr_access', id = dev.mac) }}">Access URL</a></td>
     <td><a href="{{ url_for('access.qr_generator', id = dev.mac) }}">QR</a></td>
-    <td><a href="{{ url_for('views.devices') }}">Edit</a></td>
+    <td><a href="{{ url_for('views.edit_device', id = dev.id) }}">Edit</a></td>
   </tr>
   {% endfor %}
 </table>

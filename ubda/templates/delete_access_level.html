@@ -2,11 +2,11 @@
 {% block nav %}
 {% endblock %}
 {% block content %}
-<h3>delete person {{person.first_name}} {{person.last_name}} ?<h3>
+<h3>delete access level "{{ access_level.name }}" ?<h3>
     <form method="POST">
         <button type="submit" class="btn btn-primary">Yes</button>
     </form>
-    <a href = "{{ url_for('views.personnel') }}">
+    <a href = "{{ url_for('views.access_levels') }}">
         <button type="submit" class="btn btn-primary">Cancel</button>
     </a>  
 {% endblock %}

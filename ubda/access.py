@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file
-from .models import Access_point, Person
+from .models import Access_level, Person
 from . import db
 from . import hostname
 from . import sock
@@ -24,16 +24,20 @@ def qr_generator(id):
 def qr_access(id):
     device = Device.query.filter_by(mac = id).first()
     if request.method == 'POST':
-        code = request.form.get('passcode')
-        person = Person.query.filter_by(pass_code=code).first()
-        if person and device:
-            #check if person has access
-            to_devices.update({device.id:'{"open":3}'}) #
-            flash(f'Welcome {person.first_name}')
-            return render_template('message.html', url = url_for('access.qr_access', id = device.mac)) 
-        else:
-            flash('Wrong code')
-            return render_template('message.html', url = url_for('access.qr_access', id = device.mac)) 
+        pin = request.form.get('pin')
+        person = Person.query.filter_by(pin=pin).first()
+        if not person:
+            flash('Wrong pin')
+        elif not device:
+            flash(f'device with id:{id} does not exist!')
+        else: 
+            access_level = Access_level.query.filter_by(id = person.access_level).first()
+            if not device in access_level.devices:
+                flash(f'Sorry {person.first_name}, you have no access!')
+            else:
+                to_devices.update({device.id:'{"open":3}'}) 
+                flash(f'Welcome {person.first_name}')
+        return render_template('message.html', url = url_for('access.qr_access', id = device.mac))         
     else:
         if device:
             return render_template('qr_access.html')
@@ -74,19 +78,15 @@ def qr_access(ws, id):
                 model = js['model']
             except Exception as e:              
                 print(f'exception:{e}')
-        if model:
-            print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')
-        else:
+        if not model:
             print('unsupported format, closing connection...')
             ws.close()
             return
+        print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')   
         device = Device.query.filter_by(mac=id).first()
         if not device:
             print(f'new device adding to DB...')
-            device = Device(
-                    mac = id,
-                    model = model,
-                    )
+            device = Device(mac = id, model = model)
             db.session.add(device)
             db.session.commit()
             print(f'device with id:{id} added to DB')

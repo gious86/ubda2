@@ -31,7 +31,7 @@ app.register_blueprint(access, url_prefix='/')
 #from .device_server import deviceServer
 #app.register_blueprint(deviceServer)###
 
-from .models import User
+from .models import *
 
 with app.app_context():
     db.create_all()

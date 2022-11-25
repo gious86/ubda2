@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block title %}Personnel{% endblock %} 
 {% block nav %}
-<a class="nav-item nav-link" id="addPersonnel" href="/add_person">New Person</a>
+<a class="nav-item nav-link" id="addPerson" href="/add_person">New Person</a>
 {% endblock %}
 {% block content %}
 
@@ -27,6 +27,7 @@
     <th>First name</th>
     <th>Last name</th>
     <th>Pin</th>
+    <th>Access level</th>
     <th> </th>
     <th> </th>
   </tr>
@@ -35,7 +36,8 @@
     <td>{{ person.id }}</td>
     <td>{{ person.first_name }}</td>
     <td>{{ person.last_name }}</td>
-    <td>{{ person.pass_code }}</td>
+    <td>{{ person.pin }}</td>
+    <td>{{ person.access_level }}</td>
     <td><a href="{{ url_for('views.edit_person', id = person.id) }}">Edit</a></td>
     <td><a href="{{ url_for('views.delete_person', id = person.id) }}">Delete</a></td>
   </tr>
