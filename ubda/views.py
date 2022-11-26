@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from .models import *
 from . import db
 import json
+import time
 
 
 views = Blueprint('views', __name__)
@@ -100,7 +101,8 @@ def delete_person(id):
 @login_required
 def devices():
     devs = Device.query.all()
-    return render_template("devices.html", user = current_user, devs = devs)
+    now = int(time.time()) 
+    return render_template("devices.html", user = current_user, devs = devs, now = now)
 
 
 @views.route('/edit_device/<string:id>', methods=['GET', 'POST'])
@@ -115,7 +117,7 @@ def edit_device(id):
         device.name = name
         db.session.add(device)
         db.session.commit()
-        flash('Person information updated', category='success')
+        flash('Device updated', category='success')
         return redirect(url_for('views.devices'))
     return render_template("edit_device.html", user = current_user, device = device)
 
@@ -131,6 +133,7 @@ def access_levels():
 @login_required
 def add_access_level():
     devices = Device.query.all()
+    outputs = Output.query.all()
     if request.method == 'POST':
         description = request.form.get('description')
         name = request.form.get('name')    
@@ -143,13 +146,19 @@ def add_access_level():
             new_access_level = Access_level(description = description, name = name)
             for device in devices:
                 if request.form.get(device.mac):
+                    print(f'd-{device.id}')
                     new_access_level.devices.append(device)
+            for output in outputs:
+                if request.form.get(str(output.id)):
+                    print(f'o-{output.id}')
+                    new_access_level.outputs.append(output)
             db.session.add(new_access_level)
             db.session.commit()
             flash('Access level added!', category='success') 
-            #return redirect(url_for('views.personnel')) 
-    devices = Device.query.all()
-    return render_template("add_access_level.html", user = current_user, devices = devices)
+            #return redirect(url_for('views.access_levels'))     
+    return render_template("add_access_level.html", user = current_user, 
+                                                    devices = devices, 
+                                                    outputs = outputs)
 
 
 @views.route('/edit_access_level/<string:id>', methods=['GET', 'POST'])
@@ -158,7 +167,7 @@ def edit_access_level(id):
     access_level = Access_level.query.filter_by(id=id).first()
     if not access_level :
         flash(f'No Access level with id:{id}', category='error')
-        return redirect(url_for('views.access_levels'))
+        return redirect(url_for('views.access_levels'))  
     if request.method == 'POST':
         description = request.form.get('description')
         access_level.description = description
@@ -166,8 +175,10 @@ def edit_access_level(id):
         db.session.commit()
         flash('Access level updated', category='success')
         return redirect(url_for('views.access_levels'))
-    devs = Device.query.all()
-    return render_template("edit_access_level.html", user = current_user, devs=devs)
+    devices = Device.query.all()
+    return render_template("edit_access_level.html", user = current_user, 
+                                                    access_level = access_level, 
+                                                    devices=devices)
 
 
 @views.route('/delete_access_level/<string:id>', methods=['GET', 'POST'])
@@ -183,3 +194,27 @@ def delete_access_level(id):
         flash('Access level deleted', category='success')
         return redirect(url_for('views.access_levels'))
     return render_template("delete_access_level.html", user = current_user, access_level=access_level)
+
+
+@views.route('/outputs')
+@login_required
+def outputs():
+    devs = Device.query.all()
+    return render_template("outputs.html", user = current_user, devs = devs)
+
+
+@views.route('/edit_output/<string:id>', methods=['GET', 'POST'])
+@login_required
+def edit_output(id):
+    output = Output.query.filter_by(id=id).first()
+    if not output :
+        flash(f'No output with id:{id}', category='error')
+        return redirect(url_for('views.outputs'))
+    if request.method == 'POST':
+        name = request.form.get('Name')
+        output.name = name
+        db.session.add(output)
+        db.session.commit()
+        flash('Output information updated', category='success')
+        return redirect(url_for('views.outputs'))
+    return render_template("edit_output.html", user = current_user, output = output)

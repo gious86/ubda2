@@ -1,0 +1,44 @@
+{% extends "base.html" %} {% block title %}Edit Access level{% endblock %} 
+{% block content %}
+<form method="POST">
+    <h3 align="center">Edit Access level</h3>
+    <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="name"
+          name="name"
+          placeholder="Enter name"
+          value = "{{ access_level.name }}"
+        />
+      </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <input
+        type="text"
+        class="form-control"
+        id="description"
+        name="description"
+        placeholder="Enter description"
+        value = "{{ access_level.description }}"
+      />
+    </div>
+    {% for d in devices %}
+    <br>
+    <label for="{{d.mac}}">{{d.name}} ({{d.mac}}) </label> 
+    <input type="checkbox" id="{{d.mac}}" name="{{d.mac}}" value="{{d.mac}}"
+    {% if d in access_level.devices %} checked {% endif %}> 
+    <br>
+    {% for o in d.outputs %}
+    |<label for="{{o.id}}">{{o.name}} ({{o.n}})</label> 
+    <input type="checkbox" id="{{o.id}}" name="{{o.id}}" value="{{o.id}}"
+    {% if o in access_level.outputs %} checked {% endif %}> >|
+    {% endfor %}
+    <br><hr>
+    {% endfor %}
+    <br>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{% endblock %}

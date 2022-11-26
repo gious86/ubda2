@@ -8,6 +8,13 @@ accessLevel_device = db.Table('accessLevel_device',
                                   db.Column('access_level_id', db.Integer, db.ForeignKey('access_level.id'))
                                   )
 
+
+accessLevel_output = db.Table('accessLevel_output',
+                                  db.Column('output_id', db.Integer, db.ForeignKey('output.id')),
+                                  db.Column('access_level_id', db.Integer, db.ForeignKey('access_level.id'))
+                                  )
+
+
 """
 accessLevel_person = db.Table('accessLevel_person',
                                   db.Column('person_id', db.Integer, db.ForeignKey('person.id')),
@@ -58,7 +65,13 @@ class Access_level(db.Model):
     name = db.Column(db.String(50))
     description = db.Column(db.String(50))
     devices = db.relationship('Device', secondary=accessLevel_device, back_populates='access_levels')
-    personnel = db.relationship('Person') #, secondary=accessLevel_person)  #, backref='access_levels')
+    outputs = db.relationship('Output', secondary=accessLevel_output, back_populates='access_levels')
+    #?
+    #output-ები თითოეული device-სთვის
+    #devices-ს მაგივრად outputs???
+    #თუუ დამატებით outputs???
+    #?
+    personnel = db.relationship('Person') #, secondary=accessLevel_person, back_populates='access_levels')
     
 
 class Time_zone(db.Model):
@@ -66,11 +79,29 @@ class Time_zone(db.Model):
     start = db.Column(db.Time(timezone=True))
     end = db.Column(db.Time(timezone=True))
 
+
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     model = db.Column(db.String(50))
     ip_address = db.Column(db.String(50))
+    outputs = db.relationship('Output')
     mac = db.Column(db.String(50))
-    is_online = db.Column(db.Integer)
+    last_seen = db.Column(db.Integer)
     access_levels = db.relationship('Access_level', secondary=accessLevel_device, back_populates='devices')
+
+
+class Output(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    device = db.Column(db.Integer, db.ForeignKey('device.id'))
+    n = db.Column(db.Integer)
+    access_levels = db.relationship('Access_level', secondary=accessLevel_output, back_populates='outputs')
+
+
+class Access_Log(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(50))
+    device  = db.Column(db.Integer, db.ForeignKey('device.id'))
+    person = db.Column(db.Integer, db.ForeignKey('person.id'))
+    date_time = db.Column(db.DateTime(timezone=True), default=func.now())

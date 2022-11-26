@@ -1,12 +1,11 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file
-from .models import Access_level, Person
-from . import db
-from . import hostname
-from . import sock
+from .models import Access_level, Person, Device, Output
+from . import db, sock, hostname, device_models
 import qrcode
 import io
-from .models import Device
 import json
+import time
+
 
 to_devices = {}
 
@@ -35,7 +34,12 @@ def qr_access(id):
             if not device in access_level.devices:
                 flash(f'Sorry {person.first_name}, you have no access!')
             else:
-                to_devices.update({device.id:'{"open":3}'}) 
+                outputs = []
+                for o in access_level.outputs:
+                    if o.device == device.id:
+                        outputs.append(o.n)
+                cmd = '{"open":%s}' %str(outputs)
+                to_devices.update({device.id:cmd}) 
                 flash(f'Welcome {person.first_name}')
         return render_template('message.html', url = url_for('access.qr_access', id = device.mac))         
     else:
@@ -65,49 +69,51 @@ def generate_qr(data):
 def qr_access(ws, id):
     client_ip = request.remote_addr
     print(f'incomming connection id:"{id}"')
-    data = ws.receive(10)
+    data = ws.receive(1)
     if not data:
         print('timeout')
         ws.close()
         return
     else:
-        model = None
-        if len(data) < 100:
-            try:
-                js = json.loads(data)
-                model = js['model']
-            except Exception as e:              
-                print(f'exception:{e}')
+        model = None        
+        try:
+            js = json.loads(data)
+            model = js['model']
+        except Exception as e:              
+            print(f'exception:{e}')
         if not model:
             print('unsupported format, closing connection...')
-            ws.close()
-            return
-        print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')   
-        device = Device.query.filter_by(mac=id).first()
-        if not device:
-            print(f'new device adding to DB...')
-            device = Device(mac = id, model = model)
-            db.session.add(device)
-            db.session.commit()
-            print(f'device with id:{id} added to DB')
-        else :
-            print('known device')
-    while True:
-        try:
-            data = ws.receive(1) 
-            if data:
-                print(f'from device "{device.mac}" - "{data}"')
-            #if have something to send:
-                #ws.send(something)
-            cmd = None
+        elif not model in device_models:     
+            print(f'unknown model "{model}", closing connection...')
+        else:
+            print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')   
+            device = Device.query.filter_by(mac=id).first()
+            if not device:
+                print(f'new device adding to DB...')
+                device = Device(mac = id, model = model, last_seen = int(time.time()))
+                db.session.add(device)
+                db.session.commit()
+                n_of_outputs = device_models[model]['outputs']
+                for n in range(1, n_of_outputs+1):
+                    output = Output(device = device.id, n=n)
+                    db.session.add(output)
+                db.session.commit()
+                print(f'device with id:{id} added to DB')
+            else :
+                print('known device')
+        while True:
             try:
-                cmd = to_devices[device.id]
-            except KeyError:
-                pass
-            if cmd:
-                print(f'to device "{device.mac}" - "{cmd}"')
-                ws.send(cmd)
-                to_devices.pop(device.id)
-        except Exception as e:
-            print(f'connection with "{id}" closed. e:{e}')
-            break
+                data = ws.receive(1) 
+                if data:
+                    print(f'from device "{device.mac}" - "{data}"')
+                    device.last_seen = int(time.time())
+                    db.session.add(device)
+                    db.session.commit()
+                if device.id in to_devices:
+                    cmd = to_devices[device.id]
+                    print(f'to device "{device.mac}" - "{cmd}"')
+                    ws.send(cmd)
+                    to_devices.pop(device.id)
+            except Exception as e:
+                print(f'connection with "{id}" closed. e:{e}')
+                break

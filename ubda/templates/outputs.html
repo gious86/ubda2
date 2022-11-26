@@ -1,0 +1,40 @@
+{% extends "base.html" %} {% block title %}Outputs{% endblock %} 
+{% block content %}
+
+<style>
+  table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+  </style>
+<table style="width:100%">
+  <tr>
+    <th>Device</th>
+    <th>#</th>
+    <th>Name</th>
+    <th> </th>
+  </tr>
+  {% for d in devs %}
+  {% for o in d.outputs %}
+  <tr>
+    <td>{{ d.name }}({{d.mac}})</td>
+    <td>{{ o.n }}</td>
+    <td>{{ o.name }}</td>
+    <td><a href="{{ url_for('views.edit_output', id = o.id) }}">Edit</a></td>
+  </tr>
+  {% endfor %}
+  <tr><td>----</td><td>----</td><td>----</td><td>----</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

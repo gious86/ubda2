@@ -6,6 +6,17 @@ from flask_sock import Sock
 
 hostname = 'http://192.168.1.101:5000'
 
+device_models = {
+    'fumfli 1.0':{
+        'outputs':4, 
+        'inputs':1,
+        },
+    'fumfli-16 1.0':{
+        'outputs':16,
+        'inputs':1,
+        }
+}
+
 DB_NAME = "database.db"
 
 db = SQLAlchemy()
@@ -16,9 +27,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 
 sock = Sock(app)
 
-
 db.init_app(app)
-
 
 from .views import views
 from .auth import auth

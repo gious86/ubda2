@@ -23,8 +23,15 @@
       />
     </div>
     {% for d in devices %}
-    |<label for="{{d.mac}}">{{d.name}} ({{d.mac}}) </label> 
-    <input type="checkbox" id="{{d.mac}}" name="{{d.mac}}" value="{{d.mac}}">| 
+    <br>
+    <label for="{{d.mac}}">{{d.name}} ({{d.mac}}) </label> 
+    <input type="checkbox" id="{{d.mac}}" name="{{d.mac}}" value="{{d.mac}}"> 
+    <br>
+    {% for o in d.outputs %}
+    |<label for="{{o.id}}">{{o.name}} ({{o.n}})</label> 
+    <input type="checkbox" id="{{o.id}}" name="{{o.id}}" value="{{o.id}}">|
+    {% endfor %}
+    <br><hr>
     {% endfor %}
     <br>
     <button type="submit" class="btn btn-primary">Submit</button>
