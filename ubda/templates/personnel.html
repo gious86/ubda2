@@ -27,7 +27,10 @@
     <th>First name</th>
     <th>Last name</th>
     <th>Pin</th>
+    <th>Card number</th>
     <th>Access level</th>
+    <th>Valid thru</th>
+    <th> </th>
     <th> </th>
     <th> </th>
   </tr>
@@ -37,7 +40,10 @@
     <td>{{ person.first_name }}</td>
     <td>{{ person.last_name }}</td>
     <td>{{ person.pin }}</td>
+    <td>{{ person.card_number }}</td>
     <td>{{ person.access_level }}</td>
+    <td>{{ person.valid_thru }}</td>
+    <td><a href="{{ url_for('views.person_log', id = person.id) }}">Log</a></td>
     <td><a href="{{ url_for('views.edit_person', id = person.id) }}">Edit</a></td>
     <td><a href="{{ url_for('views.delete_person', id = person.id) }}">Delete</a></td>
   </tr>

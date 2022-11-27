@@ -28,11 +28,15 @@ class Person(db.Model):
     last_name = db.Column(db.String(50))
     email = db.Column(db.String(50))
     pin = db.Column(db.String(10), unique=True)
+    card_number = db.Column(db.Integer)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     department = db.Column(db.Integer, db.ForeignKey('department.id'))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     #access_levels = db.relationship('Access_level', secondary=accessLevel_person, back_populates='personnel'
     access_level = db.Column(db.Integer, db.ForeignKey('access_level.id'))
+    valid_thru = db.Column(db.DateTime(timezone=True))
+    #last_access = db.Column(db.DateTime(timezone=True))
+    log = db.relationship('Access_log')
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,9 +49,11 @@ class User(db.Model, UserMixin):
     group = db.Column(db.Integer, db.ForeignKey('user_group.id'))
     personnel = db.relationship('Person')
 
+
 class User_group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     users = db.relationship('User')
+
 
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,10 +61,6 @@ class Department(db.Model):
     manager = db.Column(db.Integer, db.ForeignKey('user.id'))
     personnel = db.relationship('Person')
 
-class Access_point(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    output_device = db.Column(db.Integer, db.ForeignKey('device.id'))
-    outpit_no = db.Column(db.Integer)
 
 class Access_level(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,11 +68,6 @@ class Access_level(db.Model):
     description = db.Column(db.String(50))
     devices = db.relationship('Device', secondary=accessLevel_device, back_populates='access_levels')
     outputs = db.relationship('Output', secondary=accessLevel_output, back_populates='access_levels')
-    #?
-    #output-ები თითოეული device-სთვის
-    #devices-ს მაგივრად outputs???
-    #თუუ დამატებით outputs???
-    #?
     personnel = db.relationship('Person') #, secondary=accessLevel_person, back_populates='access_levels')
     
 
@@ -89,6 +86,7 @@ class Device(db.Model):
     mac = db.Column(db.String(50))
     last_seen = db.Column(db.Integer)
     access_levels = db.relationship('Access_level', secondary=accessLevel_device, back_populates='devices')
+    log = db.relationship('Access_log')
 
 
 class Output(db.Model):
@@ -99,9 +97,9 @@ class Output(db.Model):
     access_levels = db.relationship('Access_level', secondary=accessLevel_output, back_populates='outputs')
 
 
-class Access_Log(db.Model):
+class Access_log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(50))
+    content = db.Column(db.String(200))
     device  = db.Column(db.Integer, db.ForeignKey('device.id'))
     person = db.Column(db.Integer, db.ForeignKey('person.id'))
     date_time = db.Column(db.DateTime(timezone=True), default=func.now())

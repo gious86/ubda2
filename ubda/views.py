@@ -4,7 +4,7 @@ from .models import *
 from . import db
 import json
 import time
-
+from datetime import datetime
 
 views = Blueprint('views', __name__)
 
@@ -18,7 +18,9 @@ def home():
 @views.route('/personnel')
 @login_required
 def personnel():
-    return render_template("personnel.html", user=current_user)
+    access_levels = Access_level.query.all()
+    print (access_levels)
+    return render_template("personnel.html", user=current_user, access_levels=access_levels )
 
 
 @views.route('/add_person', methods=['GET', 'POST'])
@@ -30,6 +32,8 @@ def add_person():
         pin = request.form.get('pin')
         email = request.form.get('email')
         access_level = request.form.get('access_level')
+        card_number = request.form.get('card_number')
+        valid_thru =datetime.strptime(request.form.get('valid_thru'), '%Y-%m-%d')
         person = Person.query.filter_by(pin=pin).first()
         if person:
             flash('Pin already exists.', category='error')
@@ -42,8 +46,10 @@ def add_person():
                                     last_name = last_name, 
                                     email = email,
                                     pin = pin,
+                                    card_number = card_number,
                                     access_level = access_level,
-                                    created_by = current_user.id)
+                                    created_by = current_user.id,
+                                    valid_thru = valid_thru)
             db.session.add(new_person)
             db.session.commit()
             flash('Person added!', category='success') 
@@ -65,20 +71,24 @@ def edit_person(id):
         pin = request.form.get('pin')
         email = request.form.get('email')
         access_level_id = request.form.get('access_level')
+        card_number = request.form.get('card_number')
+        valid_thru = datetime.strptime(request.form.get('valid_thru'), '%Y-%m-%d')
         person.first_name = first_name
         person.last_name = last_name
         person.email = email
         person.pin = pin
         person.created_by = current_user.id
         person.access_level = access_level_id
+        person.card_number = card_number
+        person.valid_thru = valid_thru
         db.session.add(person)
         db.session.commit()
         flash('Person information updated', category='success')
         return redirect(url_for('views.personnel'))
-    accessLevels = Access_level.query.all() 
+    access_levels = Access_level.query.all() 
     return render_template("edit_person.html", user = current_user, 
                                                 person = person, 
-                                                access_levels = accessLevels)
+                                                access_levels = access_levels)
 
 
 @views.route('/delete_person/<string:id>', methods=['GET', 'POST'])
@@ -120,6 +130,17 @@ def edit_device(id):
         flash('Device updated', category='success')
         return redirect(url_for('views.devices'))
     return render_template("edit_device.html", user = current_user, device = device)
+
+
+@views.route('/device_log/<string:id>')
+@login_required
+def device_log(id):
+    device = Device.query.filter_by(id=id).first()
+    if not device:
+        flash(f'No device with id:{id}', category='error')
+        return redirect(url_for('views.devices'))
+    else:
+        return render_template("device_log.html", user = current_user, device= device)
 
 
 @views.route('/access_levels')
@@ -165,17 +186,24 @@ def add_access_level():
 @login_required
 def edit_access_level(id):
     access_level = Access_level.query.filter_by(id=id).first()
+    devices = Device.query.all()
     if not access_level :
         flash(f'No Access level with id:{id}', category='error')
         return redirect(url_for('views.access_levels'))  
     if request.method == 'POST':
-        description = request.form.get('description')
-        access_level.description = description
+        outputs = Output.query.all()
+        access_level.description = request.form.get('description')
+        """ ... """
+        for device in devices:
+            if request.form.get(device.mac):
+                access_level.devices.append(device)
+        for output in outputs:
+            if request.form.get(str(output.id)):
+                access_level.outputs.append(output)
         db.session.add(access_level)
         db.session.commit()
         flash('Access level updated', category='success')
         return redirect(url_for('views.access_levels'))
-    devices = Device.query.all()
     return render_template("edit_access_level.html", user = current_user, 
                                                     access_level = access_level, 
                                                     devices=devices)
@@ -218,3 +246,21 @@ def edit_output(id):
         flash('Output information updated', category='success')
         return redirect(url_for('views.outputs'))
     return render_template("edit_output.html", user = current_user, output = output)
+
+
+@views.route('/log')
+@login_required
+def log():
+    log = Access_log.query.all()
+    return render_template("log.html", user = current_user, log=log)
+
+
+@views.route('/person_log/<string:id>')
+@login_required
+def person_log(id):
+    person = Person.query.filter_by(id=id).first()
+    if not person:
+        flash(f'No person with id:{id}', category='error')
+        return redirect(url_for('views.personnel'))
+    else:
+        return render_template("person_log.html", user = current_user, person = person)

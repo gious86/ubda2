@@ -1,6 +1,8 @@
-{% extends "base.html" %} {% block title %}Outputs{% endblock %} 
+{% extends "base.html" %} {% block title %}Device log{% endblock %} 
 {% block content %}
 
+<h3>{{device.name}} ({{device.mac}}) -  log</h3>
+<br>
 <style>
   table {
     font-family: arial, sans-serif;
@@ -18,24 +20,18 @@
     background-color: #dddddd;
   }
   </style>
-
-{% for d in devs %}
 <table style="width:100%">
-  <th>{{d.name}} ({{d.mac}})</th>
   <tr>
-    <th>#</th>
-    <th>Name</th>
-    <th> </th>
+    <th>Person</th>
+    <th>Content</th>
+    <th>Date time</th>
   </tr>
-  {% for o in d.outputs %}
+  {% for entry in device.log %}
   <tr>
-    <td>{{ o.n }}</td>
-    <td>{{ o.name }}</td>
-    <td><a href="{{ url_for('views.edit_output', id = o.id) }}">Edit</a></td>
+    <td>{{ entry.person }}</td>
+    <td>{{ entry.content }}</td>
+    <td>{{ entry.date_time }}</td>
   </tr>
-  {% endfor %} 
+  {% endfor %}
 </table>
-<hr>
-{% endfor %}
-
 {% endblock %}

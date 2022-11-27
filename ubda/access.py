@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file
-from .models import Access_level, Person, Device, Output
+from .models import Access_level, Person, Device, Output, Access_log
 from . import db, sock, hostname, device_models
 import qrcode
 import io
@@ -11,6 +11,25 @@ to_devices = {}
 
 access = Blueprint('access', __name__)
 
+
+def activate_allowed_outputs(person, device, method):
+    log_entry = Access_log(device = device.id, person = person.id)
+    access_level = Access_level.query.filter_by(id = person.access_level).first()
+    if not device in access_level.devices:
+        result = -1
+        log_entry.content = "access denied, method: " + method
+    else:
+        outputs = []
+        for o in access_level.outputs:
+            if o.device == device.id:
+                outputs.append(o.n)
+        cmd = '{"open":%s}' %str(outputs)
+        to_devices.update({device.id:cmd}) 
+        result = 1
+        log_entry.content = "access granted, method: " + method
+    db.session.add(log_entry)
+    db.session.commit()
+    return result
 
 @access.route("/qr/<string:id>")
 def qr_generator(id):
@@ -29,25 +48,16 @@ def qr_access(id):
             flash('Wrong pin')
         elif not device:
             flash(f'device with id:{id} does not exist!')
-        else: 
-            access_level = Access_level.query.filter_by(id = person.access_level).first()
-            if not device in access_level.devices:
-                flash(f'Sorry {person.first_name}, you have no access!')
-            else:
-                outputs = []
-                for o in access_level.outputs:
-                    if o.device == device.id:
-                        outputs.append(o.n)
-                cmd = '{"open":%s}' %str(outputs)
-                to_devices.update({device.id:cmd}) 
-                flash(f'Welcome {person.first_name}')
-        return render_template('message.html', url = url_for('access.qr_access', id = device.mac))         
-    else:
-        if device:
-            return render_template('qr_access.html')
+        elif activate_allowed_outputs(person, device, 'pin') > 0: 
+            flash(f'Welcome {person.first_name}')
         else:
-            flash(f'device with id:{id} does not exist!')
-            return render_template('message.html', url = url_for('views.home'))
+            flash(f'Sorry {person.first_name}, you have no access!')
+        return render_template('message.html', url = url_for('access.qr_access', id = device.mac))         
+    elif device:
+        return render_template('qr_access.html')
+    else:
+        flash(f'device with id:{id} does not exist!')
+        return render_template('message.html', url = url_for('views.home'))
 
 
 def generate_qr(data):
@@ -84,9 +94,9 @@ def qr_access(ws, id):
         if not model:
             print('unsupported format, closing connection...')
         elif not model in device_models:     
-            print(f'unknown model "{model}", closing connection...')
+            print(f'unknown device model "{model}", closing connection...')
         else:
-            print(f'connection from:"{client_ip}", device id: "{id}", model: "{model}"')   
+            print(f'connection from:"{client_ip}", device id: "{id}", device model: "{model}"')   
             device = Device.query.filter_by(mac=id).first()
             if not device:
                 print(f'new device adding to DB...')
@@ -107,6 +117,26 @@ def qr_access(ws, id):
                 if data:
                     print(f'from device "{device.mac}" - "{data}"')
                     device.last_seen = int(time.time())
+                    js = ''
+                    try:
+                        js = json.loads(data)
+                    except: pass
+                    if js:
+                        if 'card' in js:
+                            card = js['card']
+                            person = Person.query.filter_by(card_number = card).first()
+                            if person:
+                                if activate_allowed_outputs(person, device, 'card') > 0: 
+                                    print(f'access granted - {person.first_name}')
+                                else:
+                                    print(f'no access - {person.first_name}')
+                            else :
+                                log_entry = Access_log(device = device.id, 
+                                                        content = 'unknown card:' + card)
+                                db.session.add(log_entry)
+                                db.session.commit()
+                                print(f'unknown card:{card}')
+                        #if something in js: do something
                     db.session.add(device)
                     db.session.commit()
                 if device.id in to_devices:
